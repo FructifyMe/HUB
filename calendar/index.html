@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>HUB Calendar - Final Spec</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      color: #1e293b;
+      padding: 20px 16px 40px;
+      line-height: 1.5;
+      font-size: 15px;
+    }
+    .wrap { max-width: 780px; margin: 0 auto; }
+    .header {
+      background: linear-gradient(135deg, #1e3a5f, #2563eb);
+      color: #fff;
+      padding: 28px 32px;
+      border-radius: 12px 12px 0 0;
+    }
+    .header h1 { font-size: 22px; font-weight: 700; }
+    .header p { font-size: 14px; opacity: 0.92; margin-top: 8px; }
+    .card { background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+    .section {
+      padding: 24px 32px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .section:last-child { border-bottom: none; }
+    .section h2 {
+      font-size: 15px;
+      font-weight: 700;
+      color: #2563eb;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+    .section h3 {
+      font-size: 17px;
+      font-weight: 700;
+      color: #1e293b;
+      margin-bottom: 8px;
+    }
+    .section .sub {
+      font-size: 13px;
+      color: #64748b;
+      margin-bottom: 16px;
+      line-height: 1.5;
+    }
+    .question {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+    .question .q-title {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: #1e293b;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .options { display: flex; flex-direction: column; gap: 8px; }
+    .option {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.1s, border-color 0.1s;
+      flex-wrap: wrap;
+    }
+    .option:hover { background: #f1f5f9; }
+    .option input[type=radio], .option input[type=checkbox] {
+      cursor: pointer; flex-shrink: 0;
+    }
+    .option label { cursor: pointer; flex: 1; font-size: 14px; }
+    .option select, .option input[type=text] {
+      padding: 6px 10px;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
+      font-size: 13px;
+      font-family: inherit;
+      background: #fff;
+    }
+    .option input[type=text] { flex: 1; min-width: 100px; }
+    textarea {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      font-family: inherit;
+      font-size: 14px;
+      min-height: 80px;
+      resize: vertical;
+    }
+    .alert {
+      background: #fef3c7;
+      border-left: 4px solid #f59e0b;
+      padding: 12px 16px;
+      border-radius: 4px;
+      font-size: 13px;
+      color: #78350f;
+      margin-bottom: 12px;
+    }
+    .info {
+      background: #dbeafe;
+      border-left: 4px solid #2563eb;
+      padding: 12px 16px;
+      border-radius: 4px;
+      font-size: 13px;
+      color: #1e40af;
+      margin-bottom: 16px;
+    }
+    .pill {
+      display: inline-block;
+      background: #dbeafe;
+      color: #1e40af;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .pill.warn { background: #fef3c7; color: #78350f; }
+    .pill.green { background: #dcfce7; color: #166534; }
+    .swatch {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border-radius: 3px;
+      vertical-align: middle;
+      border: 1px solid rgba(0,0,0,0.15);
+    }
+    .cal-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 8px;
+      font-size: 13px;
+    }
+    .cal-table th, .cal-table td {
+      text-align: left;
+      padding: 8px 10px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .cal-table th {
+      background: #f8fafc;
+      font-weight: 600;
+      color: #64748b;
+      text-transform: uppercase;
+      font-size: 11px;
+      letter-spacing: 0.5px;
+    }
+    .example {
+      background: #fff;
+      padding: 10px 12px;
+      border-radius: 4px;
+      border: 1px solid #e2e8f0;
+      font-family: 'SF Mono', Consolas, Monaco, monospace;
+      font-size: 12px;
+      margin-top: 6px;
+      color: #1e293b;
+    }
+    .footer {
+      padding: 24px 32px 32px;
+      background: #f8fafc;
+      border-radius: 0 0 12px 12px;
+      text-align: center;
+    }
+    button {
+      background: #2563eb;
+      color: #fff;
+      border: none;
+      padding: 14px 36px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+    button:hover { background: #1d4ed8; }
+    .footer .note {
+      font-size: 12px;
+      color: #64748b;
+      margin-top: 12px;
+    }
+    .arch-card {
+      background: #fff;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 16px;
+      cursor: pointer;
+      transition: border-color 0.1s, background 0.1s;
+    }
+    .arch-card:hover { background: #f8fafc; }
+    .arch-card.picked { border-color: #2563eb; background: #eff6ff; }
+    .arch-card .a-title {
+      font-weight: 700;
+      font-size: 15px;
+      color: #1e293b;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .arch-card .a-desc {
+      font-size: 13px;
+      color: #475569;
+      margin-top: 6px;
+      line-height: 1.5;
+    }
+    .arch-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+    @media (min-width: 640px) {
+      .arch-grid { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="header">
+      <h1>HUB Calendar - Final Spec</h1>
+      <p>Hi Alex - this is the last round of clarifications before I build the final calendar system on your account. Should take 2-3 minutes. Hit "Send My Answers" at the bottom and your email opens pre-filled to send back to Mike.</p>
+    </div>
+
+    <div class="card">
+
+      <!-- SECTION 1: Architecture -->
+      <div class="section">
+        <h2>Section 1 of 8</h2>
+        <h3>How should events show up in your calendar?</h3>
+        <p class="sub">When you schedule Job 999 with All Floorz on a Building project, where should that event appear?</p>
+
+        <div class="arch-grid">
+          <div class="arch-card" onclick="pickArch('trade-only', this)">
+            <div class="a-title"><span class="pill green">Recommended</span> Option A: Trade calendar only</div>
+            <div class="a-desc">
+              The event goes on the <strong>Flooring</strong> calendar only. To see all Building work,
+              you'd toggle on the trade calendars Building uses.
+              <br><br>
+              <strong>Pros:</strong> One event per job, less clutter.<br>
+              <strong>Cons:</strong> Filtering by division means toggling multiple trade calendars.
+            </div>
+          </div>
+
+          <div class="arch-card" onclick="pickArch('mirrored', this)">
+            <div class="a-title">Option B: Both trade AND division calendar</div>
+            <div class="a-desc">
+              The event is created <strong>twice</strong>: once on Flooring, once on Building.
+              You can toggle "Building" to see all Building work at a glance.
+              <br><br>
+              <strong>Pros:</strong> Easy filter by division. Color stays on trade calendar.<br>
+              <strong>Cons:</strong> Twice as many events, double-edits if you reschedule.
+            </div>
+          </div>
+        </div>
+        <input type="hidden" id="arch" name="arch" value="">
+      </div>
+
+      <!-- SECTION 2: Confirm calendar list -->
+      <div class="section">
+        <h2>Section 2 of 8</h2>
+        <h3>Confirm the calendar list</h3>
+        <p class="sub">Here's everything I'll create based on your email. Look it over - is anything wrong?</p>
+
+        <table class="cal-table">
+          <thead>
+            <tr><th>Calendar Name</th><th>Color</th><th>What it covers</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Acoustical Ceilings</strong></td><td><span class="swatch" style="background:#C0CA33"></span> Avocado</td><td>Boucher Acoustic</td></tr>
+            <tr><td><strong>Aldana Paint</strong></td><td><span class="swatch" style="background:#F6BF26"></span> Banana</td><td>Sub-specific (paint by Aldana)</td></tr>
+            <tr><td><strong>Cleaning</strong></td><td><span class="swatch" style="background:#0B8043"></span> Basil</td><td>HUB internal cleaning</td></tr>
+            <tr><td><strong>Demo</strong></td><td><span class="swatch" style="background:#3F51B5"></span> Blueberry</td><td>Demolition work</td></tr>
+            <tr><td><strong>Electrical</strong></td><td><span class="swatch" style="background:#F4511E"></span> Tangerine (locked)</td><td>Capital Electrical Services + others</td></tr>
+            <tr><td><strong>Sprinkler / Fire Alarm</strong></td><td><span class="swatch" style="background:#D81B60"></span> Cherry Blossom</td><td>Fire Equipment Inc.</td></tr>
+            <tr><td><strong>Flooring</strong></td><td><span class="swatch" style="background:#D50000"></span> Tomato</td><td>All Floorz + others</td></tr>
+            <tr><td><strong>Glass</strong></td><td><span class="swatch" style="background:#4285F4"></span> Cobalt</td><td>R&amp;M Glass</td></tr>
+            <tr><td><strong>HVAC</strong></td><td><span class="swatch" style="background:#795548"></span> Cocoa</td><td>DCS + Mechanical subs</td></tr>
+            <tr><td><strong>KND Plus</strong></td><td><span class="swatch" style="background:#AD1457"></span> Radicchio</td><td>(needs definition - section 4)</td></tr>
+            <tr><td><strong>Mayex</strong></td><td><span class="swatch" style="background:#039BE5"></span> Peacock</td><td>(needs definition - section 4)</td></tr>
+            <tr><td><strong>Miscellaneous</strong></td><td><span class="swatch" style="background:#616161"></span> Graphite</td><td>Catch-all for unmapped trades</td></tr>
+            <tr><td><strong>Plumbing</strong></td><td><span class="swatch" style="background:#8E24AA"></span> Grape</td><td>Beacon Mechanical (when plumbing)</td></tr>
+            <tr><td><strong>Raul Team</strong></td><td><span class="swatch" style="background:#7AE7BF"></span> Sage</td><td>(needs definition - section 4)</td></tr>
+            <tr><td><strong>Site Work</strong></td><td><span class="swatch" style="background:#A79B8E"></span> Birch</td><td>(needs definition - section 4)</td></tr>
+            <tr style="background:#f8fafc"><td><strong>Building</strong> (division)</td><td><span class="swatch" style="background:#16A765"></span> Eucalyptus</td><td>Division - per your email</td></tr>
+            <tr style="background:#f8fafc"><td><strong>Maintenance</strong> (division)</td><td><span class="swatch" style="background:#039BE5"></span> Peacock</td><td>Division - collides with Mayex (sec 5)</td></tr>
+            <tr style="background:#f8fafc"><td><strong>Restoration</strong> (division)</td><td><span class="swatch" style="background:#D50000"></span> Tomato</td><td>Division - collides with Flooring (sec 5)</td></tr>
+          </tbody>
+        </table>
+
+        <div class="question" style="margin-top:16px">
+          <div class="q-title">Is this list correct?</div>
+          <div class="options">
+            <label class="option">
+              <input type="radio" name="cal-list-ok" value="yes">
+              <span>Yes, ship it as listed (with section 5 collisions resolved)</span>
+            </label>
+            <label class="option">
+              <input type="radio" name="cal-list-ok" value="changes">
+              <span>I need changes - I'll detail in section 8 (Open notes)</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION 3: Missing trades -->
+      <div class="section">
+        <h2>Section 3 of 8</h2>
+        <h3>Trades in your Q1 data that need a home</h3>
+        <p class="sub">These show up in your sheet but weren't in your color list. Pick how to handle each.</p>
+
+        <div class="question">
+          <div class="q-title">CARPENTRY <span class="pill">Jose Carpenter</span></div>
+          <div class="options" data-trade="Carpentry">
+            <label class="option">
+              <input type="radio" name="carpentry" value="own">
+              <span>Give it its own calendar - color:</span>
+              <select data-for="carpentry-color"></select>
+            </label>
+            <label class="option">
+              <input type="radio" name="carpentry" value="roll">
+              <span>Roll into:</span>
+              <select data-for="carpentry-roll"></select>
+            </label>
+            <label class="option">
+              <input type="radio" name="carpentry" value="misc">
+              <span>Just put under Miscellaneous (gray)</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="question">
+          <div class="q-title">DRYWALL <span class="pill">Rise Contracting, Grey Hill Group</span></div>
+          <div class="options" data-trade="Drywall">
+            <label class="option">
+              <input type="radio" name="drywall" value="own">
+              <span>Own calendar - color:</span>
+              <select data-for="drywall-color"></select>
+            </label>
+            <label class="option">
+              <input type="radio" name="drywall" value="roll">
+              <span>Roll into:</span>
+              <select data-for="drywall-roll"></select>
+            </label>
+            <label class="option">
+              <input type="radio" name="drywall" value="misc">
+              <span>Just put under Miscellaneous (gray)</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="question">
+          <div class="q-title">MECHANICAL <span class="pill">Mana Mechanical, Interstate Mechanical, Beacon Mechanical</span></div>
+          <div class="options" data-trade="Mechanical">
+            <label class="option">
+              <input type="radio" name="mechanical" value="own">
+              <span>Own calendar - color:</span>
+              <select data-for="mechanical-color"></select>
+            </label>
+            <label class="option">
+              <input type="radio" name="mechanical" value="roll-hvac">
+              <span>Roll into HVAC (Cocoa)</span>
+            </label>
+            <label class="option">
+              <input type="radio" name="mechanical" value="roll">
+              <span>Roll into something else:</span>
+              <select data-for="mechanical-roll"></select>
+            </label>
+            <label class="option">
+              <input type="radio" name="mechanical" value="misc">
+              <span>Just put under Miscellaneous (gray)</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="question">
+          <div class="q-title">DOORS <span class="pill">Mayex Services does these</span></div>
+          <div class="options" data-trade="Doors">
+            <label class="option">
+              <input type="radio" name="doors" value="own">
+              <span>Own calendar - color:</span>
+              <select data-for="doors-color"></select>
+            </label>
+            <label class="option">
+              <input type="radio" name="doors" value="mayex">
+              <span>Covered by Mayex calendar (Mayex always does doors)</span>
+            </label>
+            <label class="option">
+              <input type="radio" name="doors" value="roll">
+              <span>Roll into something else:</span>
+              <select data-for="doors-roll"></select>
+            </label>
+            <label class="option">
+              <input type="radio" name="doors" value="misc">
+              <span>Just put under Miscellaneous (gray)</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION 4: New category definitions -->
+      <div class="section">
+        <h2>Section 4 of 8</h2>
+        <h3>What kind of calendar is each new one?</h3>
+        <p class="sub">For each new calendar in your list, tell me what kind of events go on it so I can route correctly.</p>
+
+        <div class="question">
+          <div class="q-title">DEMO (Blueberry)</div>
+          <div class="options">
+            <label class="option">
+              <input type="radio" name="demo-type" value="demolition">
+              <span>Demolition trade (any subcontractor doing demo work)</span>
+            </label>
+            <label class="option">
+              <input type="radio" name="demo-type" value="other">
+              <span>Other:</span>
+              <input type="text" name="demo-other" placeholder="Describe">
+            </label>
+          </div>
+        </div>
+
+        <div class="question">
+          <div class="q-title">KND PLUS (Radicchio)</div>
+          <div class="options">
+            <label class="option">
+              <input type="radio" name="knd-type" value="sub-all">
+              <span>Specific subcontractor - any work KND Plus does goes here, regardless of trade</span>
+            </label>
+            <label class="option">
+              <input type="radio" name="knd-type" value="sub-specific">
+              <span>Specific subcontractor - only when they do this trade:</span>
+              <input type="text" name="knd-specific-trade" placeholder="e.g. Electrical">
+            </label>
+            <label class="option">
+              <input type="radio" name="knd-type" value="crew">
+              <span>Internal HUB crew</span>
+            </label>
+            <label class="option">
+              <input type="radio" name="knd-type" value="other">
+              <span>Other:</span>
+              <input type="text" name="knd-other" placeholder="Describe">
+            </label>
+          </div>
+        </div>
+
+        <div class="question">
+          <div class="q-title">MAYEX (Peacock)</div>
+          <div class="options">
+            <label class="option">
+              <input type="radio" name="mayex-type" value="sub-all">
+              <span>Specific subcontractor - any work Mayex does goes here (doors, paint, etc.)</span>
+            </label>
+            <label class="option">
+              <input type="radio" name="mayex-type" value="sub-doors">
+              <span>Specific subcontractor - only Mayex door work</span>
+            </label>
+            <label class="option">
+              <input type="radio" name="mayex-type" value="other">
+              <span>Other:</span>
+              <input type="text" name="mayex-other" placeholder="Describe">
+            </label>
+          </div>
+        </div>
+
+        <div class="question">
+          <div class="q-title">RAUL TEAM (Sage)</div>
+          <div class="options">
+            <label class="option">
+              <input type="radio" name="raul-type" value="crew">
+              <span>Internal crew (HUB staff led by Raul)</span>
+            </label>
+            <label class="option">
+              <input type="radio" name="raul-type" value="sub-all">
+              <span>External sub (any work they do)</span>
+            </label>
+            <label class="option">
+              <input type="radio" name="raul-type" value="sub-specific">
+              <span>External sub - only when doing this trade:</span>
+              <input type="text" name="raul-specific-trade" placeholder="e.g. Carpentry">
+            </label>
+            <label class="option">
+              <input type="radio" name="raul-type" value="other">
+              <span>Other:</span>
+              <input type="text" name="raul-other" placeholder="Describe">
+            </label>
+          </div>
+        </div>
+
+        <div class="question">
+          <div class="q-title">SITE WORK (Birch)</div>
+          <div class="options">
+            <label class="option">
+              <input type="radio" name="sitework-type" value="trade">
+              <span>Trade - excavation, grading, exterior site prep</span>
+            </label>
+            <label class="option">
+              <input type="radio" name="sitework-type" value="general">
+              <span>General catch-all for any on-site work that doesn't fit a trade</span>
+            </label>
+            <label class="option">
+              <input type="radio" name="sitework-type" value="other">
+              <span>Other:</span>
+              <input type="text" name="sitework-other" placeholder="Describe">
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION 5: Color collisions -->
+      <div class="section">
+        <h2>Section 5 of 8</h2>
+        <h3>Color collisions to resolve</h3>
+        <p class="sub">Two pairs of your calendars share colors - on the calendar they'll look identical. Pick how to handle each.</p>
+
+        <div class="alert">
+          <strong>Maintenance</strong> (Peacock) <em>vs</em> <strong>Mayex</strong> (Peacock)
+        </div>
+        <div class="question">
+          <div class="options">
+            <label class="option">
+              <input type="radio" name="collision-1" value="keep">
+              <span>Keep both Peacock - I meant for them to look related</span>
+            </label>
+            <label class="option">
+              <input type="radio" name="collision-1" value="change-maintenance">
+              <span>Change Maintenance to:</span>
+              <select data-for="collision-1-maintenance"></select>
+            </label>
+            <label class="option">
+              <input type="radio" name="collision-1" value="change-mayex">
+              <span>Change Mayex to:</span>
+              <select data-for="collision-1-mayex"></select>
+            </label>
+          </div>
+        </div>
+
+        <div class="alert">
+          <strong>Restoration</strong> (Tomato) <em>vs</em> <strong>Flooring</strong> (Tomato)
+        </div>
+        <div class="question">
+          <div class="options">
+            <label class="option">
+              <input type="radio" name="collision-2" value="keep">
+              <span>Keep both Tomato</span>
+            </label>
+            <label class="option">
+              <input type="radio" name="collision-2" value="change-restoration">
+              <span>Change Restoration to:</span>
+              <select data-for="collision-2-restoration"></select>
+            </label>
+            <label class="option">
+              <input type="radio" name="collision-2" value="change-flooring">
+              <span>Change Flooring to:</span>
+              <select data-for="collision-2-flooring"></select>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION 6: Event details -->
+      <div class="section">
+        <h2>Section 6 of 8</h2>
+        <h3>Event title and timing</h3>
+        <p class="sub">These set the look of each event on the calendar.</p>
+
+        <div class="question">
+          <div class="q-title">Event title format</div>
+          <div class="options">
+            <label class="option">
+              <input type="radio" name="title-fmt" value="job-addr-sub">
+              <span>Job # - Address - Sub Name</span>
+            </label>
+            <div class="example" style="margin-left:30px">Job 103 - 75 State St - Capital Electrical Services</div>
+
+            <label class="option">
+              <input type="radio" name="title-fmt" value="job-addr">
+              <span>Job # - Address (sub name in event description)</span>
+            </label>
+            <div class="example" style="margin-left:30px">Job 103 - 75 State St</div>
+
+            <label class="option">
+              <input type="radio" name="title-fmt" value="addr-job-sub">
+              <span>Address - Job # - Sub</span>
+            </label>
+            <div class="example" style="margin-left:30px">75 State St - Job 103 - Capital Electrical</div>
+
+            <label class="option">
+              <input type="radio" name="title-fmt" value="custom">
+              <span>Custom format:</span>
+              <input type="text" name="title-custom" placeholder="e.g. {Job#} | {Address} | {Sub}">
+            </label>
+          </div>
+        </div>
+
+        <div class="question">
+          <div class="q-title">Event timing</div>
+          <div class="options">
+            <label class="option">
+              <input type="radio" name="timing" value="all-day-always">
+              <span>All-day, always (no times) - confirmed from your email</span>
+            </label>
+            <label class="option">
+              <input type="radio" name="timing" value="all-day-default">
+              <span>All-day by default, but sometimes I want to set specific times</span>
+            </label>
+            <label class="option">
+              <input type="radio" name="timing" value="depends">
+              <span>It depends - I'll decide event-by-event</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="question">
+          <div class="q-title">Multi-day jobs - do they span the days?</div>
+          <div class="options">
+            <label class="option">
+              <input type="radio" name="multi-day" value="span">
+              <span>Yes - a 3-day job shows as one event spanning 3 days</span>
+            </label>
+            <label class="option">
+              <input type="radio" name="multi-day" value="per-day">
+              <span>No - create one separate event per day</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION 7: Workflow & sharing -->
+      <div class="section">
+        <h2>Section 7 of 8</h2>
+        <h3>Who uses it &amp; how do you want to schedule?</h3>
+
+        <div class="question">
+          <div class="q-title">Who else on your team needs to schedule jobs?</div>
+          <div class="options">
+            <label class="option">
+              <input type="radio" name="who-schedules" value="just-me">
+              <span>Just me</span>
+            </label>
+            <label class="option">
+              <input type="radio" name="who-schedules" value="me-plus">
+              <span>Me + others:</span>
+              <input type="text" name="who-schedules-names" placeholder="Names or emails">
+            </label>
+          </div>
+        </div>
+
+        <div class="question">
+          <div class="q-title">Scheduling method</div>
+          <div class="options">
+            <label class="option">
+              <input type="radio" name="schedule-method" value="calendar">
+              <span>I'll just schedule directly in Google Calendar (drag and drop)</span>
+            </label>
+            <label class="option">
+              <input type="radio" name="schedule-method" value="form">
+              <span>Build me a quick-entry form (web page where I fill in Job #, address, sub, trade, date and it creates the event for me)</span>
+            </label>
+            <label class="option">
+              <input type="radio" name="schedule-method" value="both">
+              <span>Both - form for new jobs, drag-and-drop to reschedule</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="question">
+          <div class="q-title">Who needs view-only access to the calendars?</div>
+          <textarea name="viewers" placeholder="Emails, one per line. Leave blank if just you for now."></textarea>
+        </div>
+
+        <div class="question">
+          <div class="q-title">Should the calendar data also flow into a sheet for reporting?</div>
+          <div class="options">
+            <label class="option">
+              <input type="radio" name="reporting" value="no">
+              <span>No, just the calendar is fine</span>
+            </label>
+            <label class="option">
+              <input type="radio" name="reporting" value="yes">
+              <span>Yes, I want a sheet that mirrors the calendar events</span>
+            </label>
+            <label class="option">
+              <input type="radio" name="reporting" value="later">
+              <span>Maybe later - skip for now</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION 8: Open notes -->
+      <div class="section">
+        <h2>Section 8 of 8</h2>
+        <h3>Anything else?</h3>
+        <p class="sub">Trades I missed, sub names to add to the dropdown, layout preferences, anything I should know before building. Skip if nothing.</p>
+        <textarea name="notes" placeholder="Optional"></textarea>
+      </div>
+    </div>
+
+    <div class="footer">
+      <button onclick="submitForm()">Send My Answers to Mike</button>
+      <div class="note">Clicking opens your email program with the answers ready to send.</div>
+    </div>
+  </div>
+
+<script>
+  // Google Calendar's 24-color palette
+  var COLORS = [
+    {name: 'Tomato',         hex: '#D50000'},
+    {name: 'Flamingo',       hex: '#E67C73'},
+    {name: 'Tangerine',      hex: '#F4511E'},
+    {name: 'Pumpkin',        hex: '#EF6C00'},
+    {name: 'Mango',          hex: '#F09300'},
+    {name: 'Banana',         hex: '#F6BF26'},
+    {name: 'Citron',         hex: '#E4C441'},
+    {name: 'Avocado',        hex: '#C0CA33'},
+    {name: 'Pistachio',      hex: '#7CB342'},
+    {name: 'Basil',          hex: '#0B8043'},
+    {name: 'Eucalyptus',     hex: '#16A765'},
+    {name: 'Sage',           hex: '#7AE7BF'},
+    {name: 'Peacock',        hex: '#039BE5'},
+    {name: 'Cobalt',         hex: '#4285F4'},
+    {name: 'Blueberry',      hex: '#3F51B5'},
+    {name: 'Lavender',       hex: '#A4BDFC'},
+    {name: 'Wisteria',       hex: '#B39DDB'},
+    {name: 'Amethyst',       hex: '#9E69AF'},
+    {name: 'Grape',          hex: '#8E24AA'},
+    {name: 'Radicchio',      hex: '#AD1457'},
+    {name: 'Cherry Blossom', hex: '#D81B60'},
+    {name: 'Cocoa',          hex: '#795548'},
+    {name: 'Graphite',       hex: '#616161'},
+    {name: 'Birch',          hex: '#A79B8E'}
+  ];
+
+  var CALENDARS = [
+    'Acoustical Ceilings', 'Aldana Paint', 'Cleaning', 'Demo',
+    'Electrical', 'Sprinkler / Fire Alarm', 'Flooring', 'Glass',
+    'HVAC', 'KND Plus', 'Mayex', 'Plumbing', 'Raul Team', 'Site Work'
+  ];
+
+  // Populate all color dropdowns
+  document.querySelectorAll('select[data-for$="-color"], select[data-for$="-maintenance"], select[data-for$="-mayex"], select[data-for$="-restoration"], select[data-for$="-flooring"]').forEach(function(sel) {
+    sel.innerHTML = '<option value="">- pick a color -</option>';
+    COLORS.forEach(function(c) {
+      var opt = document.createElement('option');
+      opt.value = c.name;
+      opt.textContent = c.name;
+      sel.appendChild(opt);
+    });
+  });
+
+  // Populate "Roll into" dropdowns with calendar list
+  document.querySelectorAll('select[data-for$="-roll"]').forEach(function(sel) {
+    sel.innerHTML = '<option value="">- pick a calendar -</option>';
+    CALENDARS.forEach(function(c) {
+      var opt = document.createElement('option');
+      opt.value = c;
+      opt.textContent = c;
+      sel.appendChild(opt);
+    });
+  });
+
+  // Selecting a sub-control inside a radio option auto-selects the radio
+  document.querySelectorAll('.option select, .option input[type=text]').forEach(function(el) {
+    el.addEventListener('click', function(e) { e.stopPropagation(); });
+    el.addEventListener('focus', function() {
+      var r = el.closest('.option').querySelector('input[type=radio]');
+      if (r) r.checked = true;
+    });
+    el.addEventListener('change', function() {
+      var r = el.closest('.option').querySelector('input[type=radio]');
+      if (r) r.checked = true;
+    });
+  });
+
+  // Architecture card picker
+  function pickArch(value, card) {
+    document.getElementById('arch').value = value;
+    document.querySelectorAll('.arch-card').forEach(function(c) { c.classList.remove('picked'); });
+    card.classList.add('picked');
+  }
+
+  function getRadio(name) {
+    var r = document.querySelector('input[name="' + name + '"]:checked');
+    return r ? r.value : '';
+  }
+  function getSelect(forVal) {
+    var s = document.querySelector('select[data-for="' + forVal + '"]');
+    return s ? s.value : '';
+  }
+  function getText(name) {
+    var i = document.querySelector('input[name="' + name + '"], textarea[name="' + name + '"]');
+    return i ? i.value.trim() : '';
+  }
+  function getHidden(id) {
+    var i = document.getElementById(id);
+    return i ? i.value : '';
+  }
+
+  function describeTrade(trade, slug) {
+    var choice = getRadio(slug);
+    if (!choice) return trade + ': (no answer)';
+    if (choice === 'own') {
+      var color = getSelect(slug + '-color');
+      return trade + ': Own calendar in ' + (color || '(no color picked)');
+    }
+    if (choice === 'roll') {
+      var into = getSelect(slug + '-roll');
+      return trade + ': Roll into ' + (into || '(no target picked)');
+    }
+    if (choice === 'misc') return trade + ': Roll into Miscellaneous (gray)';
+    if (choice === 'mayex') return trade + ': Covered by Mayex calendar';
+    if (choice === 'roll-hvac') return trade + ': Roll into HVAC';
+    return trade + ': ' + choice;
+  }
+
+  function describeCategory(label, name, options) {
+    var v = getRadio(name);
+    if (!v) return label + ': (no answer)';
+    var match = options[v];
+    if (match) {
+      if (v === 'sub-specific' || v === 'sub-specific') {
+        var extra = getText(name.replace('-type', '-specific-trade'));
+        return label + ': ' + match + (extra ? ' (' + extra + ')' : '');
+      }
+      return label + ': ' + match;
+    }
+    if (v === 'other') {
+      var other = getText(name.replace('-type', '-other'));
+      return label + ': Other - ' + (other || '(no detail)');
+    }
+    return label + ': ' + v;
+  }
+
+  function describeCollision(label, slug, targetA, targetB) {
+    var v = getRadio(slug);
+    if (!v) return label + ': (no answer)';
+    if (v === 'keep') return label + ': Keep both - intentional';
+    if (v === 'change-' + targetA) {
+      var c = getSelect(slug + '-' + targetA);
+      return label + ': Change ' + targetA + ' to ' + (c || '(no color picked)');
+    }
+    if (v === 'change-' + targetB) {
+      var c = getSelect(slug + '-' + targetB);
+      return label + ': Change ' + targetB + ' to ' + (c || '(no color picked)');
+    }
+    return label + ': ' + v;
+  }
+
+  function describeTitleFormat() {
+    var v = getRadio('title-fmt');
+    if (!v) return '(no answer)';
+    var map = {
+      'job-addr-sub': 'Job # - Address - Sub Name',
+      'job-addr': 'Job # - Address (sub in description)',
+      'addr-job-sub': 'Address - Job # - Sub'
+    };
+    if (map[v]) return map[v];
+    if (v === 'custom') return 'Custom: ' + (getText('title-custom') || '(no template)');
+    return v;
+  }
+
+  function submitForm() {
+    var lines = [];
+    lines.push('Hi Mike,');
+    lines.push('');
+    lines.push('Here are my final answers for the calendar build:');
+    lines.push('');
+
+    // Section 1
+    var arch = getHidden('arch');
+    lines.push('1. ARCHITECTURE');
+    lines.push('   ' + (arch === 'trade-only' ? 'Trade calendar only (Option A)' :
+                       arch === 'mirrored' ? 'Mirrored on trade AND division (Option B)' :
+                       '(no answer)'));
+    lines.push('');
+
+    // Section 2
+    lines.push('2. CALENDAR LIST');
+    var ok = getRadio('cal-list-ok');
+    lines.push('   ' + (ok === 'yes' ? 'List is correct as shown (with section 5 collisions resolved)' :
+                       ok === 'changes' ? 'Needs changes - see Open Notes' :
+                       '(no answer)'));
+    lines.push('');
+
+    // Section 3
+    lines.push('3. MISSING TRADES');
+    lines.push('   ' + describeTrade('Carpentry', 'carpentry'));
+    lines.push('   ' + describeTrade('Drywall', 'drywall'));
+    lines.push('   ' + describeTrade('Mechanical', 'mechanical'));
+    lines.push('   ' + describeTrade('Doors', 'doors'));
+    lines.push('');
+
+    // Section 4
+    lines.push('4. NEW CATEGORY DEFINITIONS');
+    lines.push('   ' + describeCategory('Demo', 'demo-type', {
+      'demolition': 'Demolition trade'
+    }));
+    lines.push('   ' + describeCategory('KND Plus', 'knd-type', {
+      'sub-all': 'Specific sub - any work',
+      'sub-specific': 'Specific sub - only this trade',
+      'crew': 'Internal HUB crew'
+    }));
+    lines.push('   ' + describeCategory('Mayex', 'mayex-type', {
+      'sub-all': 'Specific sub - any work they do',
+      'sub-doors': 'Specific sub - only door work'
+    }));
+    lines.push('   ' + describeCategory('Raul Team', 'raul-type', {
+      'crew': 'Internal HUB crew',
+      'sub-all': 'External sub - any work',
+      'sub-specific': 'External sub - only this trade'
+    }));
+    lines.push('   ' + describeCategory('Site Work', 'sitework-type', {
+      'trade': 'Trade - excavation/grading/exterior',
+      'general': 'General catch-all for on-site work'
+    }));
+    lines.push('');
+
+    // Section 5
+    lines.push('5. COLOR COLLISIONS');
+    lines.push('   ' + describeCollision('Maintenance vs Mayex (Peacock)', 'collision-1', 'maintenance', 'mayex'));
+    lines.push('   ' + describeCollision('Restoration vs Flooring (Tomato)', 'collision-2', 'restoration', 'flooring'));
+    lines.push('');
+
+    // Section 6
+    lines.push('6. EVENT DETAILS');
+    lines.push('   Title format: ' + describeTitleFormat());
+    var timing = getRadio('timing');
+    var timingMap = {
+      'all-day-always': 'All-day always (no times)',
+      'all-day-default': 'All-day default but sometimes timed',
+      'depends': 'Depends event-by-event'
+    };
+    lines.push('   Timing: ' + (timingMap[timing] || '(no answer)'));
+    var multi = getRadio('multi-day');
+    lines.push('   Multi-day jobs: ' + (multi === 'span' ? 'Span the days (one event)' :
+                                       multi === 'per-day' ? 'Separate event per day' :
+                                       '(no answer)'));
+    lines.push('');
+
+    // Section 7
+    lines.push('7. WORKFLOW & ACCESS');
+    var who = getRadio('who-schedules');
+    if (who === 'me-plus') {
+      lines.push('   Schedulers: Me + ' + (getText('who-schedules-names') || '(no names)'));
+    } else if (who === 'just-me') {
+      lines.push('   Schedulers: Just me');
+    } else {
+      lines.push('   Schedulers: (no answer)');
+    }
+    var method = getRadio('schedule-method');
+    var methodMap = {
+      'calendar': 'Just Google Calendar (drag and drop)',
+      'form': 'Build a quick-entry web form',
+      'both': 'Both - form for new, drag-and-drop to reschedule'
+    };
+    lines.push('   Scheduling method: ' + (methodMap[method] || '(no answer)'));
+    var viewers = getText('viewers');
+    lines.push('   Viewers: ' + (viewers ? viewers.replace(/\n/g, ', ') : '(none for now)'));
+    var rep = getRadio('reporting');
+    var repMap = {
+      'no': 'No, calendar only',
+      'yes': 'Yes, mirror to a sheet',
+      'later': 'Skip for now, maybe later'
+    };
+    lines.push('   Reporting/sheet: ' + (repMap[rep] || '(no answer)'));
+    lines.push('');
+
+    // Section 8
+    var notes = getText('notes');
+    if (notes) {
+      lines.push('8. OTHER NOTES');
+      lines.push(notes);
+      lines.push('');
+    }
+
+    lines.push('Thanks,');
+    lines.push('Alex');
+
+    var body = encodeURIComponent(lines.join('\n'));
+    var subject = encodeURIComponent('Re: HUB scheduling - final spec answers');
+    window.location.href = 'mailto:fructifyme@gmail.com?subject=' + subject + '&body=' + body;
+  }
+</script>
+</body>
+</html>
